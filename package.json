@@ -1,6 +1,6 @@
 {
   "name": "wintip-wallet-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Connect a dApp to Wintip Wallet over CIP-0103, the Canton dApp standard.",
   "license": "MIT",
   "author": "Wintip",
