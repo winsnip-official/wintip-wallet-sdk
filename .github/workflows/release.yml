@@ -1,0 +1,132 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['18', '20', '22', '24']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm run test
+
+      - run: npm run build
+
+  publish-npm:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      # Needed to create the GitHub Release (and its tag) below.
+      contents: write
+      # Required for npm provenance: the published package is signed against this workflow run,
+      # so consumers can verify it was built from this repo and not uploaded by hand.
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - run: npm ci
+
+      # The workflow runs on every push to main, so most runs are not releases. Publishing is
+      # driven by the version in package.json: bump it, and the next push ships that version.
+      - name: Check if this version is already published
+        id: check
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            echo "$NAME@$VERSION is already on npm — skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "$NAME@$VERSION is new — publishing."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # `prepublishOnly` runs typecheck + test + build again, so a broken commit cannot publish.
+      - name: Publish to npm
+        if: steps.check.outputs.skip == 'false'
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # `tag_name` is required: this runs on a branch push, so there is no tag to infer.
+      - name: Create GitHub Release
+        if: steps.check.outputs.skip == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.check.outputs.version }}
+          name: v${{ steps.check.outputs.version }}
+          generate_release_notes: true
+
+  publish-github-packages:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://npm.pkg.github.com
+          # GitHub Packages only accepts a scope that matches the repository owner,
+          # so the mirror is published as @winsnip-official/* instead of the plain npm name.
+          scope: '@winsnip-official'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Rescope the package for GitHub Packages
+        run: |
+          npm pkg set name=@winsnip-official/wintip-wallet-sdk
+          # Provenance attestation is an npmjs.com feature; GitHub Packages rejects it.
+          npm pkg delete publishConfig.provenance
+
+      - name: Check if this version is already published
+        id: check
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "@winsnip-official/wintip-wallet-sdk@$VERSION" version >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to GitHub Packages
+        if: steps.check.outputs.skip == 'false'
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

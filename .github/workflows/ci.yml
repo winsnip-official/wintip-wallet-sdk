@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['18', '20', '22', '24']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm run test
+
+      - run: npm run build
+
+      # The package promises zero runtime dependencies; a stray `dependencies` block is a
+      # supply-chain regression in a wallet SDK, so fail the build rather than warn about it.
+      - name: Assert no runtime dependencies
+        run: |
+          node -e "
+            const pkg = require('./package.json');
+            const deps = Object.keys(pkg.dependencies || {});
+            if (deps.length) {
+              console.error('Runtime dependencies are not allowed:', deps.join(', '));
+              process.exit(1);
+            }
+            console.log('OK — no runtime dependencies.');
+          "
+
+      # Catches a broken exports map before it reaches npm.
+      - name: Smoke test built output
+        run: |
+          node --input-type=module -e "
+            import { WintipClient, WINTIP_ERROR_CODES, getWintipClient } from './dist/index.js';
+            if (typeof WintipClient !== 'function') throw new Error('ESM entry is broken');
+            if (WINTIP_ERROR_CODES.USER_REJECTED !== 4001) throw new Error('error codes are wrong');
+            if (getWintipClient() !== null) throw new Error('not SSR-safe: expected null without a window');
+            console.log('ESM OK');
+          "
+          node -e "
+            const { WintipRpcError, isUserRejection } = require('./dist/index.cjs');
+            if (!isUserRejection(new WintipRpcError('x', 4001))) throw new Error('CJS entry is broken');
+            console.log('CJS OK');
+          "
