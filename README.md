@@ -7,7 +7,7 @@
 
 Connect a dApp to [Wintip Wallet](https://wintip.cc) over **CIP-0103**, the Canton dApp standard.
 
-📦 [**wintip-wallet-sdk on npm**](https://www.npmjs.com/package/wintip-wallet-sdk)
+🌐 [**wintip.cc**](https://wintip.cc) &nbsp;·&nbsp; 📦 [**wintip-wallet-sdk on npm**](https://www.npmjs.com/package/wintip-wallet-sdk)
 
 - **Zero runtime dependencies.** Nothing is pulled into your bundle but this package.
 - **SSR-safe.** Importing it on a server does nothing; every `window` access is guarded.
