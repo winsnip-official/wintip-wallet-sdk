@@ -1,0 +1,77 @@
+{
+  "name": "wintip-wallet-sdk",
+  "version": "0.1.0",
+  "description": "Connect a dApp to Wintip Wallet over CIP-0103, the Canton dApp standard.",
+  "license": "MIT",
+  "author": "Wintip",
+  "homepage": "https://wintip.cc",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/winsnip-official/wintip-wallet-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/winsnip-official/wintip-wallet-sdk/issues"
+  },
+  "keywords": [
+    "canton",
+    "cip-0103",
+    "wallet",
+    "wintip",
+    "dapp",
+    "web3"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js",
+      "require": "./dist/react/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run test && npm run build",
+    "prepublishOnly": "npm run check"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "happy-dom": "^15.11.6",
+    "react": "^18.3.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.4"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
