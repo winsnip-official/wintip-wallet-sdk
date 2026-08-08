@@ -1,6 +1,13 @@
 # wintip-wallet-sdk
 
+[![npm version](https://img.shields.io/npm/v/wintip-wallet-sdk.svg)](https://www.npmjs.com/package/wintip-wallet-sdk)
+[![npm downloads](https://img.shields.io/npm/dm/wintip-wallet-sdk.svg)](https://www.npmjs.com/package/wintip-wallet-sdk)
+[![CI](https://github.com/winsnip-official/wintip-wallet-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/winsnip-official/wintip-wallet-sdk/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/npm/l/wintip-wallet-sdk.svg)](./LICENSE)
+
 Connect a dApp to [Wintip Wallet](https://wintip.cc) over **CIP-0103**, the Canton dApp standard.
+
+📦 [**wintip-wallet-sdk on npm**](https://www.npmjs.com/package/wintip-wallet-sdk)
 
 - **Zero runtime dependencies.** Nothing is pulled into your bundle but this package.
 - **SSR-safe.** Importing it on a server does nothing; every `window` access is guarded.
